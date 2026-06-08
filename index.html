@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASR Human Eval — Darija Pilot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <header id="toolbar">
+      <div id="toolbar-nav">
+        <label for="location-select" class="sr-only">Tier</label>
+        <select id="location-select" aria-label="Tier"></select>
+
+        <label for="file-select" class="sr-only">File</label>
+        <select id="file-select" aria-label="File"></select>
+      </div>
+
+      <div id="toolbar-font-size">
+        <button id="font-shrink-btn" class="font-size-btn" title="Shrink transcription text">A&#8722;</button>
+        <span id="font-size-display"></span>
+        <button id="font-enlarge-btn" class="font-size-btn" title="Enlarge transcription text">A+</button>
+      </div>
+
+      <div id="toolbar-player">
+        <button id="play-btn" disabled aria-label="Play / Pause">&#9654; Play</button>
+      </div>
+
+      <div id="toolbar-meta">
+        <span id="reviewer-label" title="Reviewer name"></span>
+      </div>
+    </header>
+
+    <div id="waveform-container">
+      <!-- WaveSurfer renders its canvas directly into this div -->
+      <div id="waveform-placeholder">Decoding audio&hellip;</div>
+    </div>
+
+    <main id="transcription-area">
+      <table id="transcription-table" aria-label="Annotator transcriptions">
+        <tbody id="transcription-body">
+          <tr id="loading-row">
+            <td colspan="2" class="status-cell">Loading data&hellip;</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <section id="correction-section">
+        <div id="correction-header">
+          <label for="correction-text">Your transcription</label>
+          <span id="correction-hint">Edit to confirm or correct the text below</span>
+        </div>
+        <textarea id="correction-text" dir="rtl" rows="3"
+          placeholder="…"></textarea>
+      </section>
+
+      <section id="metadata-section">
+        <table id="metadata-table" aria-label="Annotator metadata comparison">
+          <thead id="metadata-head"></thead>
+          <tbody id="metadata-body"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <footer id="annotation-panel">
+      <div id="notes-block">
+        <label for="file-notes">File notes</label>
+        <textarea id="file-notes" placeholder="Notes about this recording…" rows="3"></textarea>
+      </div>
+      <div id="panel-actions">
+        <label for="import-input" class="btn btn-secondary">
+          Import annotations
+          <input type="file" id="import-input" accept=".json" hidden>
+        </label>
+        <button id="export-btn" class="btn btn-primary">Export annotations</button>
+      </div>
+    </footer>
+
+  </div><!-- /#app -->
+
+  <!-- wavesurfer.js v7: audio waveform renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

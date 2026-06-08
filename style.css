@@ -1,0 +1,456 @@
+/* ── Variables ──────────────────────────────────────────────────────────────── */
+:root {
+  /* Layout */
+  --toolbar-height: 52px;
+  --waveform-height: 96px;
+  --system-label-width: 90px;
+  --transcription-font-size: 12px;
+
+  /* Colors — chrome */
+  --color-toolbar-bg:   #1e293b;
+  --color-toolbar-text: #f1f5f9;
+  --color-toolbar-dim:  #94a3b8;
+  --color-toolbar-ctrl: #334155;
+  --color-waveform-bg:  #0f172a;
+
+  /* Colors — content */
+  --color-bg:           #f1f5f9;
+  --color-panel:        #ffffff;
+  --color-border:       #e2e8f0;
+  --color-text:         #0f172a;
+  --color-text-muted:   #64748b;
+  --color-row-alt:      #f8fafc;
+  --color-row-hover:    #eff6ff;
+  --color-accent:       #3b82f6;
+  --color-accent-hover: #2563eb;
+
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+/* Visually hidden (for screen-reader labels) */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ── App Shell ──────────────────────────────────────────────────────────────── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: var(--toolbar-height);
+  background: var(--color-toolbar-bg);
+  color: var(--color-toolbar-text);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+#toolbar-nav   { display: flex; gap: 8px; flex: 1; }
+#toolbar-meta  { flex: 0; white-space: nowrap; font-size: 12px; color: var(--color-toolbar-dim); }
+
+#toolbar-font-size {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+#font-size-display {
+  font-size: 11px;
+  color: var(--color-toolbar-dim);
+  min-width: 28px;
+  text-align: center;
+}
+
+.font-size-btn {
+  padding: 3px 7px;
+  border: 1px solid var(--color-toolbar-ctrl);
+  border-radius: 3px;
+  background: var(--color-toolbar-ctrl);
+  color: var(--color-toolbar-text);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.font-size-btn:hover:not(:disabled) { background: #475569; }
+.font-size-btn:disabled { opacity: 0.35; cursor: default; }
+
+#toolbar select {
+  padding: 5px 8px;
+  border: 1px solid var(--color-toolbar-ctrl);
+  border-radius: 4px;
+  background: var(--color-toolbar-ctrl);
+  color: var(--color-toolbar-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+#toolbar select:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+.btn-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+
+.btn-secondary {
+  background: var(--color-panel);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn-secondary:hover { background: var(--color-row-alt); border-color: #94a3b8; }
+
+#play-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#play-btn:hover:not(:disabled) { background: var(--color-accent-hover); }
+#play-btn:disabled {
+  background: var(--color-toolbar-ctrl);
+  color: #64748b;
+  cursor: default;
+}
+
+/* ── Waveform ────────────────────────────────────────────────────────────────── */
+#waveform-container {
+  height: var(--waveform-height);
+  background: var(--color-waveform-bg);
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+  position: relative;  /* anchor for the placeholder overlay */
+  overflow: hidden;
+}
+
+/* Placeholder and error share the same centred-overlay style */
+/* Flip only the waveform canvas RTL so the playhead advances right→left,
+   matching Arabic text direction. Pointer-event remapping in app.js keeps
+   click-to-seek correct. The placeholder and error divs are siblings, not
+   children, of this element, so their text is never mirrored. */
+#waveform-wave {
+  transform: scaleX(-1);
+  width: 100%;
+}
+
+#waveform-placeholder,
+#waveform-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #475569;
+  font-style: italic;
+  pointer-events: none; /* don't block clicks on the waveform */
+}
+
+#waveform-error {
+  color: #f87171;
+  font-style: normal;
+}
+
+/* ── Transcription Area ──────────────────────────────────────────────────────── */
+#transcription-area {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--color-panel);
+}
+
+#transcription-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#transcription-table tbody tr:nth-child(even) { background: var(--color-row-alt); }
+#transcription-table tbody tr:hover           { background: var(--color-row-hover); }
+
+.system-label {
+  width: var(--system-label-width);
+  padding: 10px 14px;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  border-right: 1px solid var(--color-border);
+  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+
+.transcription-cell {
+  padding: 10px 18px;
+  font-size: var(--transcription-font-size);
+  line-height: 1.7;
+  vertical-align: top;
+  cursor: text;
+}
+
+.status-cell {
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Word spans — colored by applyWordColors(); timing hooks for M2/M3 */
+.word { border-radius: 2px; padding: 0 2px; transition: background-color 0.08s; }
+
+
+/* ── Transcription Correction Field ─────────────────────────────────────────── */
+#correction-section {
+  border-top: 1px solid var(--color-border);
+  background: #fafbfc;
+  padding: 8px 16px 10px;
+}
+
+#correction-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+#correction-section label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+#correction-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+#correction-text {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: var(--transcription-font-size);
+  font-family: inherit;
+  resize: vertical;
+  min-height: 52px;
+  color: var(--color-text);
+  background: var(--color-panel);
+  line-height: 1.7;
+}
+#correction-text:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+/* ── Metadata Comparison Grid ────────────────────────────────────────────────── */
+#metadata-section {
+  border-top: 2px solid var(--color-border);
+  background: var(--color-panel);
+}
+
+#metadata-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#metadata-table thead tr {
+  background: var(--color-row-alt);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.meta-dim-col { width: 130px; }
+.meta-ref-col { width: 110px; }
+
+#metadata-table th {
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  text-align: left;
+}
+
+#metadata-table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+}
+#metadata-table tbody tr:last-child { border-bottom: none; }
+
+.meta-dim-label {
+  padding: 8px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-right: 1px solid var(--color-border);
+  vertical-align: middle;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.meta-ref-cell {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  border-right: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.meta-ann-cell {
+  padding: 8px 14px;
+  font-size: 12px;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border);
+}
+.meta-ann-cell:last-child { border-right: none; }
+
+.meta-missing {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ── Label Chips (M4 — agreement voting) ─────────────────────────────────────── */
+.label-chip {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s;
+  line-height: 1.4;
+}
+.label-chip:hover { border-color: rgba(0, 0, 0, 0.22); }
+.label-chip.voted {
+  border-color: rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10);
+}
+
+/* ── Metadata Write-in Column ─────────────────────────────────────────────────── */
+.meta-custom-col  { width: 320px; }
+
+.meta-custom-cell {
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+
+.meta-custom-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: none;
+  height: 32px;
+  color: var(--color-text);
+  background: var(--color-panel);
+  line-height: 1.4;
+}
+.meta-custom-input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+/* ── Annotation Panel ────────────────────────────────────────────────────────── */
+#annotation-panel {
+  flex-shrink: 0;
+  border-top: 2px solid var(--color-border);
+  background: var(--color-panel);
+  padding: 12px 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+#notes-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#notes-block label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+#file-notes {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  color: var(--color-text);
+}
+#file-notes:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+#panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 18px; /* align with textarea top, below label */
+}
+
+/* ── Fatal Error ─────────────────────────────────────────────────────────────── */
+.fatal-error {
+  margin: 40px;
+  padding: 20px;
+  background: var(--tag-incorrect-bg);
+  color: var(--tag-incorrect-fg);
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+}
